@@ -9,11 +9,13 @@
 		</Optional>
 		<Optional feature="atlassian.util" />
 		<Optional feature="auth-refresh" />
+		<Require feature="dynamic-height"/>
 		<Require feature="views" />
 		<Require feature="settitle" />
         <Require feature="setprefs"/>
 		<Require feature="oauthpopup" />
 		#oauth
+		#supportedLocales("gadget.common")
 		<Locale
 			messages="__ATLASSIAN_BASE_URL__/download/resources/com.acme.jira-burndown-charts/i18n/ALL_ALL.xml" />
 	</ModulePrefs>
@@ -38,7 +40,7 @@
                  descriptor: function(args)
                  {
                      var gadget = this;
-                     gadgets.window.setTitle("__MSG_gadget.days.left.configTitle__");
+                     gadgets.window.setTitle("__MSG_version-burndown-aggregated.config.title__");
                      var projectPicker = AJS.gadget.fields.projectPicker(gadget, "projectId", args.projectOptions);
  
                      return {

@@ -1,4 +1,5 @@
 <messagebundle>
 	<msg name="version-burndown-aggregated.title">Version burndown aggregated</msg>
 	<msg name="version-burndown-aggregated.description">Version burndown aggregated.</msg>
+	<msg name="version-burndown-aggregated.config.title">Version burndown aggregated configuration</msg>
 </messagebundle>
