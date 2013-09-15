@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Module>
+	<ModulePrefs title="__MSG_gadget.title__" directory_title="__MSG_gadget.title__"
+		description="__MSG_gadget.description__">
+		<Optional feature="gadget-directory">
+			<Param name="categories">
+				JIRA
+			</Param>
+		</Optional>
+		<Optional feature="atlassian.util" />
+		<Optional feature="auth-refresh" />
+		<Require feature="views" />
+		<Require feature="settitle" />
+        <Require feature="setprefs"/>
+		<Require feature="oauthpopup" />
+		#oauth
+		<Locale
+			messages="__ATLASSIAN_BASE_URL__/download/resources/com.acme.test02/i18n/ALL_ALL.xml" />
+	</ModulePrefs>
+    <UserPref name="isConfigured" datatype="hidden" default_value="false"/>
+	<UserPref name="projectOrFilterId" datatype="hidden" />
+	<UserPref name="projectId" datatype="hidden"/>
+	<Content type="html" view="profile">
+		<![CDATA[
+    #requireResource("com.atlassian.jira.gadgets:common")
+    #requireResource("com.acme.test02:test02-resources")
+    #includeResources()
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+ <script type="text/javascript">
+      google.load('visualization', '1', {packages: ['corechart']});
+    </script>
+    <script type="text/javascript">
+       (function () {
+    var gadget = AJS.Gadget({
+        baseUrl: "__ATLASSIAN_BASE_URL__",
+        useOauth: "/rest/gadget/1.0/currentUser",
+ config: {
+                 descriptor: function(args)
+                 {
+                     var gadget = this;
+                     gadgets.window.setTitle("__MSG_gadget.days.left.configTitle__");
+                     var projectPicker = AJS.gadget.fields.projectPicker(gadget, "projectId", args.projectOptions);
+ 
+                     return {
+ 
+                         theme : function()
+                         {
+//                             if (gadgets.window.getViewportDimensions().width < 450)
+//                             {
+                                 return "gdt top-label";
+//                             }
+//                             else
+//                             {
+//                                 return "gdt";
+//                             }
+                         }(),
+                         fields: [
+                             projectPicker,
+                             AJS.gadget.fields.nowConfigured()
+                         ]
+                     };
+                 },
+                 args: function()
+                 {
+                     return [
+                         {
+                             key: "projectOptions",
+                             ajaxOptions:  "/rest/gadget/1.0/filtersAndProjects?showFilters=false"
+ 
+                         }
+ 
+ 
+                     ];
+                 }()
+             },
+                     view: {
+            template: function(args) {
+            console.log("vai");
+            console.log(args);
+                var gadget = this;
+                
+                 function drawVisualization() {
+        // Some raw data (not necessarily accurate)
+        var data = google.visualization.arrayToDataTable(args.burndown.dataTable);
+console.log("data done");
+console.log(args);
+console.log(gadgets.util.unescapeString(gadget.getPref("projectId")));
+console.log("data done"+args.burndown.version.name);
+        var options = {
+          title : 'Project '+args.burndown.project.name+', burndown of version ' + args.burndown.version.name,
+//          vAxis: {title: "Hours"},
+//          hAxis: {title: "Month"},
+          seriesType: "bars",
+          series: {0: {type: "area"}, 1: {type: "area"}}
+        };
+console.log("options");
+		console.log("doing stuff");
+		gadget.getView().html("<div id=\"chart_div\" style=\"width: 600px; height: 250px;\"></div>");
+        var chart = new google.visualization.ComboChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+      }
+      google.setOnLoadCallback(drawVisualization);
+                
+            },
+            args: [{
+                key: "burndown",
+                ajaxOptions: function() {
+                    return {
+                        url: "/rest/tutorial-gadget/1.0/burndown.json",
+                        data:  {
+                                            projectId : gadgets.util.unescapeString(this.getPref("projectId"))
+                                          }
+                    };
+                }
+            }]
+        }
+    });
+})();
+    </script>
+    ]]>
+	</Content>
+</Module>

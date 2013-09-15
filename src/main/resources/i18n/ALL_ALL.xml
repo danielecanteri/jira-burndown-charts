@@ -1,0 +1,4 @@
+<messagebundle>
+	<msg name="gadget.title">My First Gadget</msg>
+	<msg name="gadget.description">A sample gadget to install into JIRA.</msg>
+</messagebundle>
