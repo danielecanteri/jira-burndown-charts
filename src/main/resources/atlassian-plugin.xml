@@ -15,7 +15,7 @@
         appear in the gadget directory and also allows administrators to
         disable/enable the gadget.
      -->
-    <gadget key="tutorial-gadget" name="JIRA Tutorial Gadget" location="gadget.xml"/>
+    <gadget key="version-burndown-aggregated-chart" name="Version burndown aggregate" location="version-burndown-aggregated-gadget.xml"/>
  
     <!-- Makes the gadget Locale messages available for the gadget's use. -->
     <resource type="download" name="i18n/ALL_ALL.xml" location="i18n/ALL_ALL.xml">
@@ -31,15 +31,14 @@
     </rest>
      
     <!-- add our web resources -->
-    <web-resource key="test02-resources" name="test02 Web Resources">
+    <web-resource key="jira-burndown-charts-resources" name="jira-burndown-charts Web Resources">
         <dependency>com.atlassian.auiplugin:ajs</dependency>
         
-        <resource type="download" name="test02.css" location="/css/test02.css"/>
-        <resource type="download" name="test02.js" location="/js/test02.js"/>
-<!--         <resource type="download" name="Chart.min.js" location="/js/Chart.min.js"/> -->
+        <resource type="download" name="jira-burndown-charts.css" location="/css/jira-burndown-charts.css"/>
+        <resource type="download" name="jira-burndown-charts.js" location="/js/jira-burndown-charts.js"/>
         <resource type="download" name="images/" location="/images"/>
 
-        <context>test02</context>
+        <context>jira-burndown-charts</context>
     </web-resource>
     
     <!-- publish our component -->

@@ -1,4 +1,4 @@
 <messagebundle>
-	<msg name="gadget.title">My First Gadget</msg>
-	<msg name="gadget.description">A sample gadget to install into JIRA.</msg>
+	<msg name="version-burndown-aggregated.title">Version burndown aggregated</msg>
+	<msg name="version-burndown-aggregated.description">Version burndown aggregated.</msg>
 </messagebundle>

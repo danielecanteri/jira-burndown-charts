@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Module>
-	<ModulePrefs title="__MSG_gadget.title__" directory_title="__MSG_gadget.title__"
-		description="__MSG_gadget.description__">
+	<ModulePrefs title="__MSG_version-burndown-aggregated.title__" directory_title="__MSG_version-burndown-aggregated.title__"
+		description="__MSG_version-burndown-aggregated.description__">
 		<Optional feature="gadget-directory">
 			<Param name="categories">
-				JIRA
+				Charts
 			</Param>
 		</Optional>
 		<Optional feature="atlassian.util" />
@@ -15,7 +15,7 @@
 		<Require feature="oauthpopup" />
 		#oauth
 		<Locale
-			messages="__ATLASSIAN_BASE_URL__/download/resources/com.acme.test02/i18n/ALL_ALL.xml" />
+			messages="__ATLASSIAN_BASE_URL__/download/resources/com.acme.jira-burndown-charts/i18n/ALL_ALL.xml" />
 	</ModulePrefs>
     <UserPref name="isConfigured" datatype="hidden" default_value="false"/>
 	<UserPref name="projectOrFilterId" datatype="hidden" />
@@ -23,7 +23,7 @@
 	<Content type="html" view="profile">
 		<![CDATA[
     #requireResource("com.atlassian.jira.gadgets:common")
-    #requireResource("com.acme.test02:test02-resources")
+    #requireResource("com.acme.jira-burndown-charts:jira-burndown-charts-resources")
     #includeResources()
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
  <script type="text/javascript">
@@ -75,17 +75,11 @@
              },
                      view: {
             template: function(args) {
-            console.log("vai");
-            console.log(args);
                 var gadget = this;
                 
                  function drawVisualization() {
         // Some raw data (not necessarily accurate)
         var data = google.visualization.arrayToDataTable(args.burndown.dataTable);
-console.log("data done");
-console.log(args);
-console.log(gadgets.util.unescapeString(gadget.getPref("projectId")));
-console.log("data done"+args.burndown.version.name);
         var options = {
           title : 'Project '+args.burndown.project.name+', burndown of version ' + args.burndown.version.name,
 //          vAxis: {title: "Hours"},
@@ -93,8 +87,6 @@ console.log("data done"+args.burndown.version.name);
           seriesType: "bars",
           series: {0: {type: "area"}, 1: {type: "area"}}
         };
-console.log("options");
-		console.log("doing stuff");
 		gadget.getView().html("<div id=\"chart_div\" style=\"width: 600px; height: 250px;\"></div>");
         var chart = new google.visualization.ComboChart(document.getElementById('chart_div'));
         chart.draw(data, options);
