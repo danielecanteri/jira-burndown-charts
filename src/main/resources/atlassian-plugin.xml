@@ -26,7 +26,7 @@
         Automatically finds all JAX-RS resource classes in the plugin and
         publishes them.
      -->
-    <rest key="tutorial-gadget-rest-resources" path="/tutorial-gadget" version="1.0">
+    <rest key="jira-burndown-charts" path="/jira-burndown-charts" version="1.0">
         <description>Provides the REST resource for the project list.</description>
     </rest>
      

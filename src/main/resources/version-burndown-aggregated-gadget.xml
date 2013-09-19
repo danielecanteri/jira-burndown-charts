@@ -32,6 +32,12 @@
       google.load('visualization', '1', {packages: ['corechart']});
     </script>
     <script type="text/javascript">
+    
+    console.log("setting callback");
+          google.setOnLoadCallback(drawVisualization);
+    console.log("callback set");
+    function drawVisualization() {
+    
        (function () {
     var gadget = AJS.Gadget({
         baseUrl: "__ATLASSIAN_BASE_URL__",
@@ -78,8 +84,13 @@
                      view: {
             template: function(args) {
                 var gadget = this;
+                console.log("gadget");
+                console.log(gadget);
+                console.log("args");
+                console.log(args);
+                console.log(args.burndown);
+                console.log(args.burndown.version);
                 
-                 function drawVisualization() {
         // Some raw data (not necessarily accurate)
         var data = google.visualization.arrayToDataTable(args.burndown.dataTable);
         var options = {
@@ -92,15 +103,13 @@
 		gadget.getView().html("<div id=\"chart_div\" style=\"width: 600px; height: 250px;\"></div>");
         var chart = new google.visualization.ComboChart(document.getElementById('chart_div'));
         chart.draw(data, options);
-      }
-      google.setOnLoadCallback(drawVisualization);
                 
             },
             args: [{
                 key: "burndown",
                 ajaxOptions: function() {
                     return {
-                        url: "/rest/tutorial-gadget/1.0/burndown.json",
+                        url: "/rest/jira-burndown-charts/1.0/burndown.json",
                         data:  {
                                             projectId : gadgets.util.unescapeString(this.getPref("projectId"))
                                           }
@@ -110,6 +119,9 @@
         }
     });
 })();
+
+      }
+
     </script>
     ]]>
 	</Content>
