@@ -150,7 +150,11 @@ public class BurndownResource {
 
 			Map<User, TheVersionBurndown> mapUserBurndown = new HashMap<User, TheVersionBurndown>();
 			for (User aUser : assignees) {
-				headers.add(aUser.getName() + " actual");
+				if (aUser != null) {
+					headers.add(aUser.getName() + " actual");
+				} else {
+					headers.add("Unassigned");
+				}
 				mapUserBurndown.put(aUser, new TheVersionBurndown(dates,
 						issuesForUser(issues, aUser)));
 			}
@@ -210,7 +214,11 @@ public class BurndownResource {
 	private List<Issue> issuesForUser(List<Issue> issues, User aUser) {
 		List<Issue> result = new ArrayList<Issue>();
 		for (Issue issue : issues) {
-			if (issue.getAssignee().equals(aUser)) {
+			if (issue.getAssignee() == null) {
+				if (aUser == null) {
+					result.add(issue);
+				}
+			} else if (issue.getAssignee().equals(aUser)) {
 				result.add(issue);
 			}
 		}
