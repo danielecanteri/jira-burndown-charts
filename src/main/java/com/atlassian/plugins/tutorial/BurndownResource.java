@@ -1,5 +1,7 @@
 package com.atlassian.plugins.tutorial;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -131,27 +133,12 @@ public class BurndownResource {
 			System.out.println("total: " + search.getTotal());
 			List<Issue> issues = search.getIssues();
 
-			long totalOriginalEstimates = 0;
 			List<User> assignees = new ArrayList<User>();
 			for (Issue issue : issues) {
-				totalOriginalEstimates += issue.getOriginalEstimate();
 				if (!assignees.contains(issue.getAssignee())) {
 					assignees.add(issue.getAssignee());
 				}
 			}
-			// List<Burndown> burndowns = new ArrayList<Burndown>();
-			// Burndown theVersionBurndown = calculateVersionBurndown(dates,
-			// totalOriginalEstimates);
-			// burndowns.add(theVersionBurndown);
-			//
-			// System.out.println(assignees);
-			// for (User assignee : assignees) {
-			// Burndown theAssigneeBurndown = calculateAssigneeBurndown(dates,
-			// issues, assignee);
-			// burndowns.add(theAssigneeBurndown);
-			// }
-
-			// versionBurndown.setBurndowns(burndowns);
 
 			Collection<Collection<?>> dataTable = new ArrayList<Collection<?>>();
 			versionBurndown.setDataTable(dataTable);
@@ -159,7 +146,7 @@ public class BurndownResource {
 			List<String> headers = new ArrayList<String>();
 			headers.add("Date");
 			headers.add("Version planned");
-			headers.add("Versione actual");
+			headers.add("Version actual");
 
 			Map<User, TheVersionBurndown> mapUserBurndown = new HashMap<User, TheVersionBurndown>();
 			for (User aUser : assignees) {
@@ -187,48 +174,15 @@ public class BurndownResource {
 				list.add(thatVersionBurndown.actual(dateTime));
 				for (User aUser : assignees) {
 					if (mapUserBurndown.get(aUser).actual(dateTime) != null) {
-						list.add(mapUserBurndown.get(aUser).actual(dateTime)
-								* thatVersionBurndown.planned(dateTime)
-								/ mapUserBurndown.get(aUser).planned(dateTime));
+						list.add(new BigDecimal(mapUserBurndown.get(aUser)
+								.actual(dateTime))
+								.multiply(thatVersionBurndown.planned(dateTime))
+								.divide(mapUserBurndown.get(aUser).planned(
+										dateTime), 2, RoundingMode.HALF_EVEN)
+								.setScale(2, RoundingMode.HALF_EVEN));
 					} else {
 						list.add(null);
 					}
-				}
-			}
-
-			for (User aUser : assignees) {
-				int totalPlanned = 0;
-				for (Issue issue : issues) {
-					if (issue.getAssignee().equals(aUser)) {
-						totalPlanned += issue.getOriginalEstimate();
-					}
-				}
-				int burndownPlanned = totalPlanned;
-				int step = totalPlanned / dates.size();
-				for (DateTime dateTime : dates) {
-					List<Object> list = map.get(dateTime);
-
-					// list.add(thatVersionBurndown.planned(dateTime));
-					// list.add(thatVersionBurndown.actual(dateTime));
-
-					// if (list.size() > 4) {
-					// list.add(burndownPlanned);
-					// } else {
-					// list.add(burndownPlanned);
-					// }
-					// burndownPlanned -= step;
-					//
-					// if (!dateTime.isAfter(DateTime.now())) {
-					// if (list.size() > 5) {
-					// list.add(actual(issues, aUser, dateTime)
-					// + (Integer) map.get(dates.get(0)).get(
-					// list.size() - 1));
-					// } else {
-					// list.add(actual(issues, aUser, dateTime));
-					// }
-					// } else {
-					// list.add(null);
-					// }
 				}
 			}
 
@@ -259,67 +213,6 @@ public class BurndownResource {
 			if (issue.getAssignee().equals(aUser)) {
 				result.add(issue);
 			}
-		}
-		return result;
-	}
-
-	private int actual(List<Issue> issues, User aUser, DateTime dateTime) {
-		int actual = 0;
-		for (Issue issue : issues) {
-			if (issue.getAssignee().equals(aUser)) {
-				if (issue.getResolutionDate() == null
-						|| dateTime.plusDays(1).isBefore(
-								new DateTime(issue.getResolutionDate())))
-					actual += issue.getOriginalEstimate();
-			}
-		}
-		return actual;
-	}
-
-	private Burndown calculateAssigneeBurndown(List<DateTime> dates,
-			List<Issue> issues, User assignee) {
-		long totalEstimates = 0;
-		for (Issue issue : issues) {
-			if (issue.getAssignee().equals(assignee)) {
-				System.out.println("res date: " + issue.getResolutionDate());
-				totalEstimates += issue.getOriginalEstimate();
-			}
-		}
-		Burndown burndown = new Burndown();
-		List<Integer> result = calculateBurndownUpToNow(dates, totalEstimates);
-		burndown.setData(result);
-		return burndown;
-
-	}
-
-	private Burndown calculateVersionBurndown(List<DateTime> dates,
-			long totalOriginalEstimates) {
-		Burndown burndown = new Burndown();
-		List<Integer> result = calculateBurndown(dates, totalOriginalEstimates);
-		burndown.setData(result);
-		return burndown;
-	}
-
-	private List<Integer> calculateBurndownUpToNow(List<DateTime> dates,
-			long totalOriginalEstimates) {
-		long step = totalOriginalEstimates / dates.size();
-		List<Integer> result = new ArrayList<Integer>();
-		for (DateTime dateTime : dates) {
-			if (!dateTime.isAfter(DateTime.now())) {
-				result.add((int) totalOriginalEstimates);
-				totalOriginalEstimates -= step;
-			}
-		}
-		return result;
-	}
-
-	private List<Integer> calculateBurndown(List<DateTime> dates,
-			long totalOriginalEstimates) {
-		long step = totalOriginalEstimates / dates.size();
-		List<Integer> result = new ArrayList<Integer>();
-		for (DateTime dateTime : dates) {
-			result.add((int) totalOriginalEstimates);
-			totalOriginalEstimates -= step;
 		}
 		return result;
 	}

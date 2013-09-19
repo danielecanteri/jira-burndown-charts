@@ -1,5 +1,7 @@
 package com.atlassian.plugins.tutorial;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,14 +45,15 @@ public class TheVersionBurndown {
 		}
 	}
 
-	public Long planned(DateTime dateTime) {
+	public BigDecimal planned(DateTime dateTime) {
 		Long result = totalPlanned;
 		for (DateTime aDate : dates) {
 			if (aDate.isBefore(dateTime)) {
 				result -= totalPlanned / dates.size();
 			}
 		}
-		return result;
+		return new BigDecimal(result).divide(new BigDecimal(3600), 2,
+				RoundingMode.HALF_EVEN).setScale(2, RoundingMode.HALF_EVEN);
 	}
 
 	public Long actual(DateTime dateTime) {
@@ -65,6 +68,6 @@ public class TheVersionBurndown {
 				result -= mapResolutionDates.get(aDate);
 			}
 		}
-		return result;
+		return result / 3600;
 	}
 }
