@@ -1,5 +1,7 @@
 package com.atlassian.plugins.tutorial;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -96,106 +98,123 @@ public class BurndownResource {
 	@Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
 	public Response getBurndown(@Context HttpServletRequest request,
 			@QueryParam("projectId") String projectIdString) {
-
-		Long projectId = Long.valueOf(projectIdString.substring("project-"
-				.length()));
-
-		String username = userManager.getRemoteUsername(request);
-		User user = userUtil.getUser(username);
-		GetProjectResult projectByKey = projectService.getProjectById(user,
-				projectId);
-		Project project = projectByKey.getProject();
-		Collection<Version> versions = project.getVersions();
-
-		Version firstUnreleased = firstUnreleased(versions);
-
-		VersionBurndown versionBurndown = new VersionBurndown();
-		versionBurndown.setProject(ProjectRepresentation.fromProject(project));
-		versionBurndown.setVersion(VersionRepresentation
-				.fromVersion(firstUnreleased));
-
-		Date startDate = startDate(firstUnreleased, versions);
-		Date releaseDate = firstUnreleased.getReleaseDate();
-
-		List<DateTime> dates = calculateVersionWorkingDays(startDate,
-				releaseDate);
-		System.out.println("dates calculated start " + startDate);
-		System.out.println("dates calculated release " + releaseDate);
-		System.out.println("dates calculated " + dates);
-		versionBurndown.setDates(toString(dates));
-
-		SearchResults search;
 		try {
-			Query query = JqlQueryBuilder.newBuilder().where()
-					.fixVersion(firstUnreleased.getId()).buildQuery();
-			search = searchService.search(user, query,
-					PagerFilter.getUnlimitedFilter());
-			System.out.println("total: " + search.getTotal());
-			List<Issue> issues = search.getIssues();
+			Long projectId = Long.valueOf(projectIdString.substring("project-"
+					.length()));
 
-			List<User> assignees = new ArrayList<User>();
-			for (Issue issue : issues) {
-				if (!assignees.contains(issue.getAssignee())) {
-					assignees.add(issue.getAssignee());
-				}
-			}
+			String username = userManager.getRemoteUsername(request);
+			User user = userUtil.getUser(username);
+			GetProjectResult projectByKey = projectService.getProjectById(user,
+					projectId);
+			Project project = projectByKey.getProject();
+			Collection<Version> versions = project.getVersions();
 
-			Collection<Collection<?>> dataTable = new ArrayList<Collection<?>>();
-			versionBurndown.setDataTable(dataTable);
+			Version firstUnreleased = firstUnreleased(versions);
 
-			List<String> headers = new ArrayList<String>();
-			headers.add("Date");
-			headers.add("Version planned");
-			headers.add("Version actual");
+			VersionBurndown versionBurndown = new VersionBurndown();
+			versionBurndown.setProject(ProjectRepresentation
+					.fromProject(project));
+			versionBurndown.setVersion(VersionRepresentation
+					.fromVersion(firstUnreleased));
 
-			Map<User, TheVersionBurndown> mapUserBurndown = new HashMap<User, TheVersionBurndown>();
-			for (User aUser : assignees) {
-				if (aUser != null) {
-					headers.add(aUser.getName() + " actual");
-				} else {
-					headers.add("Unassigned");
-				}
-				mapUserBurndown.put(aUser, new TheVersionBurndown(dates,
-						issuesForUser(issues, aUser)));
-			}
-			dataTable.add(headers);
+			Date startDate = startDate(firstUnreleased, versions);
+			Date releaseDate = firstUnreleased.getReleaseDate();
 
-			TheVersionBurndown thatVersionBurndown = new TheVersionBurndown(
-					dates, issues);
+			List<DateTime> dates = calculateVersionWorkingDays(startDate,
+					releaseDate);
+			System.out.println("dates calculated start " + startDate);
+			System.out.println("dates calculated release " + releaseDate);
+			System.out.println("dates calculated " + dates);
+			versionBurndown.setDates(toString(dates));
 
-			Map<DateTime, List<Object>> map = new HashMap<DateTime, List<Object>>();
-			for (DateTime dateTime : dates) {
-				ArrayList<Object> arrayList = new ArrayList<Object>();
-				map.put(dateTime, arrayList);
-				dataTable.add(arrayList);
-				arrayList.add(dateTime.toString("dd/MM/yyyy"));
-			}
+			SearchResults search;
+			try {
+				Query query = JqlQueryBuilder.newBuilder().where()
+						.fixVersion(firstUnreleased.getId()).buildQuery();
+				search = searchService.search(user, query,
+						PagerFilter.getUnlimitedFilter());
+				System.out.println("total: " + search.getTotal());
+				List<Issue> issues = search.getIssues();
 
-			for (DateTime dateTime : dates) {
-				List<Object> list = map.get(dateTime);
-
-				list.add(thatVersionBurndown.planned(dateTime));
-				list.add(thatVersionBurndown.actual(dateTime));
-				for (User aUser : assignees) {
-					if (mapUserBurndown.get(aUser).actual(dateTime) != null) {
-						list.add(new BigDecimal(mapUserBurndown.get(aUser)
-								.actual(dateTime))
-								.multiply(thatVersionBurndown.planned(dateTime))
-								.divide(mapUserBurndown.get(aUser).planned(
-										dateTime), 2, RoundingMode.HALF_EVEN)
-								.setScale(2, RoundingMode.HALF_EVEN));
-					} else {
-						list.add(null);
+				List<User> assignees = new ArrayList<User>();
+				for (Issue issue : issues) {
+					if (!assignees.contains(issue.getAssignee())) {
+						assignees.add(issue.getAssignee());
 					}
 				}
+
+				Collection<Collection<?>> dataTable = new ArrayList<Collection<?>>();
+				versionBurndown.setDataTable(dataTable);
+
+				List<String> headers = new ArrayList<String>();
+				headers.add("Date");
+				headers.add("Version planned");
+				headers.add("Version actual");
+
+				Map<User, TheVersionBurndown> mapUserBurndown = new HashMap<User, TheVersionBurndown>();
+				for (User aUser : assignees) {
+					if (aUser != null) {
+						headers.add(aUser.getName() + " actual");
+					} else {
+						headers.add("Unassigned");
+					}
+					mapUserBurndown.put(aUser, new TheVersionBurndown(dates,
+							issuesForUser(issues, aUser)));
+				}
+				dataTable.add(headers);
+
+				TheVersionBurndown thatVersionBurndown = new TheVersionBurndown(
+						dates, issues);
+
+				Map<DateTime, List<Object>> map = new HashMap<DateTime, List<Object>>();
+				for (DateTime dateTime : dates) {
+					ArrayList<Object> arrayList = new ArrayList<Object>();
+					map.put(dateTime, arrayList);
+					dataTable.add(arrayList);
+					arrayList.add(dateTime.toString("dd/MM/yyyy"));
+				}
+
+				for (DateTime dateTime : dates) {
+					List<Object> list = map.get(dateTime);
+
+					list.add(thatVersionBurndown.planned(dateTime));
+					list.add(thatVersionBurndown.actual(dateTime));
+					for (User aUser : assignees) {
+						if (mapUserBurndown.get(aUser).actual(dateTime) != null
+								&& mapUserBurndown.get(aUser).planned(dateTime) != null
+								&& mapUserBurndown.get(aUser).planned(dateTime)
+										.intValue() != 0) {
+							list.add(new BigDecimal(mapUserBurndown.get(aUser)
+									.actual(dateTime))
+									.multiply(
+											thatVersionBurndown
+													.planned(dateTime))
+									.divide(mapUserBurndown.get(aUser).planned(
+											dateTime), 2,
+											RoundingMode.HALF_EVEN)
+									.setScale(2, RoundingMode.HALF_EVEN));
+						} else {
+							if (dates.get(0).equals(dateTime))
+								list.add(BigDecimal.ZERO);
+							else
+								list.add(null);
+						}
+					}
+				}
+
+			} catch (SearchException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 
-		} catch (SearchException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+			return Response.ok(versionBurndown).build();
+		} catch (RuntimeException e) {
+			StringWriter sw = new StringWriter();
+			PrintWriter pw = new PrintWriter(sw);
+			e.printStackTrace(pw);
 
-		return Response.ok(versionBurndown).build();
+			return Response.ok(sw.getBuffer()).build();
+		}
 	}
 
 	private List<DateTime> calculateVersionWorkingDays(Date startDate,
@@ -238,6 +257,14 @@ public class BurndownResource {
 		DateTime start = new DateTime(new Date());
 		Days daysBetween = Days.daysBetween(start, start.plusDays(10));
 		System.out.println(daysBetween);
+		try {
+			BigDecimal.ONE.divide(BigDecimal.ZERO);
+		} catch (RuntimeException e) {
+			StringWriter sw = new StringWriter();
+			PrintWriter pw = new PrintWriter(sw);
+			e.printStackTrace(pw);
+			System.out.println(sw.getBuffer());
+		}
 
 	}
 
