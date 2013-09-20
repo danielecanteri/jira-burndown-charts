@@ -31,17 +31,25 @@ public class TheVersionBurndown {
 	}
 
 	public void add(Issue issue) {
-		totalPlanned += issue.getOriginalEstimate();
-		if (issue.getResolutionDate() != null) {
-			DateTime dateTime = new DateMidnight(issue.getResolutionDate())
-					.toDateTime();
+		try {
+			if (issue.getOriginalEstimate() != null) {
+				totalPlanned += issue.getOriginalEstimate();
+				if (issue.getResolutionDate() != null) {
+					DateTime dateTime = new DateMidnight(
+							issue.getResolutionDate()).toDateTime();
 
-			if (mapResolutionDates.get(dateTime) == null) {
-				mapResolutionDates.put(dateTime, 0L);
+					if (mapResolutionDates.get(dateTime) == null) {
+						mapResolutionDates.put(dateTime, 0L);
+					}
+
+					mapResolutionDates.put(
+							dateTime,
+							mapResolutionDates.get(dateTime)
+									+ issue.getOriginalEstimate());
+				}
 			}
-
-			mapResolutionDates.put(dateTime, mapResolutionDates.get(dateTime)
-					+ issue.getOriginalEstimate());
+		} catch (RuntimeException e) {
+			e.printStackTrace();
 		}
 	}
 

@@ -247,15 +247,17 @@ public class BurndownResource {
 				+ versions.size());
 		Version result = null;
 		for (Version version : versions) {
-			if (!version.isArchived() && !version.isReleased()) {
-				if (result == null) {
-					result = version;
-				} else {
-					System.out.println("archived: " + version.isArchived());
-					System.out.println("released: " + version.isReleased());
-					if (startDate(version, versions).before(
-							startDate(result, versions))) {
+			if (version.getReleaseDate() != null) {
+				if (!version.isArchived() && !version.isReleased()) {
+					if (result == null) {
 						result = version;
+					} else {
+						System.out.println("archived: " + version.isArchived());
+						System.out.println("released: " + version.isReleased());
+						if (startDate(version, versions).before(
+								startDate(result, versions))) {
+							result = version;
+						}
 					}
 				}
 			}
@@ -269,16 +271,17 @@ public class BurndownResource {
 		} catch (NoSuchMethodError e) {
 			Version previousVersion = null;
 			for (Version version2 : allVersions) {
-				if (previousVersion == null) {
-					previousVersion = version2;
-				} else {
-					if (version2.getReleaseDate().before(
-							version.getReleaseDate())
-							&& version2.getReleaseDate().after(
-									previousVersion.getReleaseDate())) {
+				if (version2.getReleaseDate() != null) {
+					if (previousVersion == null) {
 						previousVersion = version2;
+					} else {
+						if (version2.getReleaseDate().before(
+								version.getReleaseDate())
+								&& version2.getReleaseDate().after(
+										previousVersion.getReleaseDate())) {
+							previousVersion = version2;
+						}
 					}
-
 				}
 			}
 			return new DateMidnight(previousVersion.getReleaseDate()).plusDays(
