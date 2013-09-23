@@ -21,6 +21,7 @@ import javax.ws.rs.core.Response;
 import org.joda.time.DateTime;
 
 import com.acme.jiracharts.core.domain.issue.IssueRepository;
+import com.acme.jiracharts.core.domain.version.Version;
 import com.acme.jiracharts.core.domain.version.VersionRepository;
 import com.acme.jiracharts.jira.JiraIssueRepository;
 import com.acme.jiracharts.jira.JiraVersionRepository;
@@ -100,7 +101,7 @@ public class UserLoadResource {
 					projectId);
 			Project project = projectByKey.getProject();
 
-			com.acme.jiracharts.core.domain.version.Version firstUnreleased = versionRepository
+			Version firstUnreleased = versionRepository
 					.firstUnreleasedOfProject(project);
 
 			VersionBurndown versionBurndown = new VersionBurndown();
@@ -117,7 +118,9 @@ public class UserLoadResource {
 
 			List<User> assignees = new ArrayList<User>();
 			for (Issue issue : issues) {
-				if (!assignees.contains(issue.getAssignee())) {
+				if (issue.getOriginalEstimate() != null
+						&& issue.getOriginalEstimate() != 0
+						&& !assignees.contains(issue.getAssignee())) {
 					assignees.add(issue.getAssignee());
 				}
 			}
