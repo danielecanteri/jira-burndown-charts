@@ -16,6 +16,7 @@
         disable/enable the gadget.
      -->
     <gadget key="version-burndown-aggregated-chart" name="Version burndown aggregate" location="version-burndown-aggregated-gadget.xml"/>
+    <gadget key="userload-chart" name="User load" location="user-load-gadget.xml"/>
  
     <!-- Makes the gadget Locale messages available for the gadget's use. -->
     <resource type="download" name="i18n/ALL_ALL.xml" location="i18n/ALL_ALL.xml">

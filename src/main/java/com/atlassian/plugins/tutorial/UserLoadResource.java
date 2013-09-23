@@ -3,10 +3,8 @@ package com.atlassian.plugins.tutorial;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,8 +39,8 @@ import com.atlassian.sal.api.user.UserManager;
 /**
  * REST resource that provides a list of projects in JSON format.
  */
-@Path("/burndown")
-public class BurndownResource {
+@Path("/userload")
+public class UserLoadResource {
 	private UserManager userManager;
 	private PermissionManager permissionManager;
 	private UserUtil userUtil;
@@ -65,7 +63,7 @@ public class BurndownResource {
 	 *            the JIRA object which manages permissions for users and
 	 *            projects
 	 */
-	public BurndownResource(ProjectService projectService,
+	public UserLoadResource(ProjectService projectService,
 			VersionService versionService, SearchService searchService,
 			UserManager userManager, UserUtil userUtil,
 			PermissionManager permissionManager) {
@@ -111,9 +109,6 @@ public class BurndownResource {
 			versionBurndown.setVersion(VersionRepresentation
 					.fromVersion(firstUnreleased));
 
-			Date startDate = firstUnreleased.getStartDate();
-			Date releaseDate = firstUnreleased.getReleaseDate();
-
 			List<DateTime> dates = firstUnreleased.workingDays();
 			versionBurndown.setDates(toString(dates));
 
@@ -132,13 +127,11 @@ public class BurndownResource {
 
 			List<String> headers = new ArrayList<String>();
 			headers.add("Date");
-			headers.add("Version planned");
-			headers.add("Version actual");
 
 			Map<User, Burndown> mapUserBurndown = new HashMap<User, Burndown>();
 			for (User aUser : assignees) {
 				if (aUser != null) {
-					headers.add(aUser.getName() + " actual");
+					headers.add(aUser.getName());
 				} else {
 					headers.add("Unassigned");
 				}
@@ -146,8 +139,6 @@ public class BurndownResource {
 						new Burndown(dates, issuesForUser(issues, aUser)));
 			}
 			dataTable.add(headers);
-
-			Burndown thatVersionBurndown = new Burndown(dates, issues);
 
 			Map<DateTime, List<Object>> map = new HashMap<DateTime, List<Object>>();
 			for (DateTime dateTime : dates) {
@@ -160,19 +151,10 @@ public class BurndownResource {
 			for (DateTime dateTime : dates) {
 				List<Object> list = map.get(dateTime);
 
-				list.add(thatVersionBurndown.planned(dateTime));
-				list.add(thatVersionBurndown.actual(dateTime));
 				for (User aUser : assignees) {
-					if (mapUserBurndown.get(aUser).actual(dateTime) != null
-							&& mapUserBurndown.get(aUser).planned(dateTime) != null
-							&& mapUserBurndown.get(aUser).planned(dateTime)
-									.intValue() != 0) {
+					if (mapUserBurndown.get(aUser).actual(dateTime) != null) {
 						list.add(new BigDecimal(mapUserBurndown.get(aUser)
-								.actual(dateTime))
-								.multiply(thatVersionBurndown.planned(dateTime))
-								.divide(mapUserBurndown.get(aUser).planned(
-										dateTime), 2, RoundingMode.HALF_EVEN)
-								.setScale(2, RoundingMode.HALF_EVEN));
+								.actual(dateTime)));
 					} else {
 						if (dates.get(0).equals(dateTime))
 							list.add(BigDecimal.ZERO);

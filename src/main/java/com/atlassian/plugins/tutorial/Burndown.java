@@ -11,13 +11,13 @@ import org.joda.time.DateTime;
 
 import com.atlassian.jira.issue.Issue;
 
-public class TheVersionBurndown {
+public class Burndown {
 
 	private Map<DateTime, Long> mapResolutionDates = new HashMap<DateTime, Long>();
 	private List<DateTime> dates;
 	private Long totalPlanned = 0L;
 
-	public TheVersionBurndown(List<DateTime> dates, List<Issue> issues) {
+	public Burndown(List<DateTime> dates, List<Issue> issues) {
 		this.dates = dates;
 		for (DateTime aDate : dates) {
 			if (!aDate.isAfter(DateTime.now())) {

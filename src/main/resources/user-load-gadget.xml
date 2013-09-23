@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Module>
+	<ModulePrefs title="__MSG_user-load.title__" directory_title="__MSG_user-load.title__"
+		description="__MSG_user-load.description__">
+		<Optional feature="gadget-directory">
+			<Param name="categories">
+				Charts
+			</Param>
+		</Optional>
+		<Optional feature="atlassian.util" />
+		<Optional feature="auth-refresh" />
+		<Require feature="dynamic-height"/>
+		<Require feature="views" />
+		<Require feature="settitle" />
+        <Require feature="setprefs"/>
+		<Require feature="oauthpopup" />
+		#oauth
+		#supportedLocales("gadget.common")
+		<Locale
+			messages="__ATLASSIAN_BASE_URL__/download/resources/com.acme.jira-burndown-charts/i18n/ALL_ALL.xml" />
+	</ModulePrefs>
+    <UserPref name="isConfigured" datatype="hidden" default_value="false"/>
+	<UserPref name="projectOrFilterId" datatype="hidden" />
+	<UserPref name="projectId" datatype="hidden"/>
+	<Content type="html" view="profile">
+		<![CDATA[
+    #requireResource("com.atlassian.jira.gadgets:common")
+    #requireResource("com.acme.jira-burndown-charts:jira-burndown-charts-resources")
+    #includeResources()
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+ <script type="text/javascript">
+      google.load('visualization', '1', {packages: ['corechart']});
+    </script>
+    <script type="text/javascript">
+    
+          google.setOnLoadCallback(drawVisualization);
+    function drawVisualization() {
+    
+       (function () {
+    var gadget = AJS.Gadget({
+        baseUrl: "__ATLASSIAN_BASE_URL__",
+        useOauth: "/rest/gadget/1.0/currentUser",
+ config: {
+                 descriptor: function(args)
+                 {
+                     var gadget = this;
+                     gadgets.window.setTitle("__MSG_user-load.config.title__");
+                     var projectPicker = AJS.gadget.fields.projectPicker(gadget, "projectId", args.projectOptions);
+ 
+                     return {
+ 
+                         theme : function()
+                         {
+//                             if (gadgets.window.getViewportDimensions().width < 450)
+//                             {
+                                 return "gdt top-label";
+//                             }
+//                             else
+//                             {
+//                                 return "gdt";
+//                             }
+                         }(),
+                         fields: [
+                             projectPicker,
+                             AJS.gadget.fields.nowConfigured()
+                         ]
+                     };
+                 },
+                 args: function()
+                 {
+                     return [
+                         {
+                             key: "projectOptions",
+                             ajaxOptions:  "/rest/gadget/1.0/filtersAndProjects?showFilters=false"
+ 
+                         }
+ 
+ 
+                     ];
+                 }()
+             },
+                     view: {
+            template: function(args) {
+                var gadget = this;
+                
+        // Some raw data (not necessarily accurate)
+        var data = google.visualization.arrayToDataTable(args.burndown.dataTable);
+        var options = {
+          title : 'Project '+args.burndown.project.name+', burndown of version ' + args.burndown.version.name,
+//          vAxis: {title: "Hours"},
+//          hAxis: {title: "Month"},
+          seriesType: "bars"
+        };
+		gadget.getView().html("<div id=\"chart_div\" style=\"width: 600px; height: 250px;\"></div>");
+        var chart = new google.visualization.ComboChart(document.getElementById('chart_div'));
+        chart.draw(data, options);
+                
+            },
+            args: [{
+                key: "burndown",
+                ajaxOptions: function() {
+                    return {
+                        url: "/rest/jira-burndown-charts/1.0/userload.json",
+                        data:  {
+                                            projectId : gadgets.util.unescapeString(this.getPref("projectId"))
+                                          }
+                    };
+                }
+            }]
+        }
+    });
+})();
+
+      }
+
+    </script>
+    ]]>
+	</Content>
+</Module>
