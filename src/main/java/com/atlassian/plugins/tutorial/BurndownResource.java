@@ -3,7 +3,6 @@ package com.atlassian.plugins.tutorial;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -27,7 +26,6 @@ import com.acme.jiracharts.core.domain.version.Version;
 import com.acme.jiracharts.core.domain.version.VersionRepository;
 import com.acme.jiracharts.jira.JiraIssueRepository;
 import com.acme.jiracharts.jira.JiraVersionRepository;
-import com.atlassian.core.util.StringUtils;
 import com.atlassian.crowd.embedded.api.User;
 import com.atlassian.jira.bc.issue.search.SearchService;
 import com.atlassian.jira.bc.project.ProjectService;
@@ -93,41 +91,42 @@ public class BurndownResource {
 	@AnonymousAllowed
 	@Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
 	public Response getBurndown(@Context HttpServletRequest request,
-			@QueryParam("projectId") String projectIdString, @QueryParam("versionId") String versionIdString) {
+			@QueryParam("projectId") String projectIdString,
+			@QueryParam("versionId") String versionIdString) {
 		try {
 			Long projectId = Long.valueOf(projectIdString.substring("project-"
 					.length()));
-			
+
 			String username = userManager.getRemoteUsername(request);
 			User user = userUtil.getUser(username);
 			GetProjectResult projectByKey = projectService.getProjectById(user,
 					projectId);
 			Project project = projectByKey.getProject();
-			
-			
+
 			Version firstUnreleased;
 			if (versionIdString == null) {
 				firstUnreleased = versionRepository
 						.firstUnreleasedOfProject(project);
 			} else {
-				firstUnreleased = versionRepository.byName(project, versionIdString);
+				firstUnreleased = versionRepository.byName(project,
+						versionIdString);
 			}
-			
+
 			VersionBurndown versionBurndown = new VersionBurndown();
 			versionBurndown.setProject(ProjectRepresentation
 					.fromProject(project));
 			versionBurndown.setVersion(VersionRepresentation
 					.fromVersion(firstUnreleased));
-			
+
 			Date startDate = firstUnreleased.getStartDate();
 			Date releaseDate = firstUnreleased.getReleaseDate();
-			
+
 			List<DateTime> dates = firstUnreleased.workingDays();
 			versionBurndown.setDates(toString(dates));
-			
+
 			List<Issue> issues = issueRepository.allIssuesForVersion(user,
 					firstUnreleased);
-			
+
 			List<User> assignees = new ArrayList<User>();
 			for (Issue issue : issues) {
 				if (issue.getOriginalEstimate() != null
@@ -136,20 +135,20 @@ public class BurndownResource {
 					assignees.add(issue.getAssignee());
 				}
 			}
-			
+
 			Collection<Collection<?>> dataTable = new ArrayList<Collection<?>>();
 			versionBurndown.setDataTable(dataTable);
-			
+
 			List<Header> headers = new ArrayList<Header>();
 			headers.add(new Header("Date", "string"));
 			headers.add(new Header("ideal", "number"));
 			headers.add(new Header("actual", "number"));
 			headers.add(new Header("forecast", "number"));
-			
+
 			dataTable.add(headers);
-			
+
 			Burndown thatVersionBurndown = new Burndown(dates, issues);
-			
+
 			Map<DateTime, List<Object>> map = new HashMap<DateTime, List<Object>>();
 			ArrayList<Object> arrayListStart = new ArrayList<Object>();
 			dataTable.add(arrayListStart);
@@ -163,25 +162,25 @@ public class BurndownResource {
 				dataTable.add(arrayList);
 				arrayList.add(dateTime.toString("dd/MM/yyyy"));
 			}
-			
+
 			for (DateTime dateTime : dates) {
 				List<Object> list = map.get(dateTime);
-				
+
 				list.add(thatVersionBurndown.ideal(dateTime));
 				list.add(thatVersionBurndown.actual(dateTime));
 				list.add(thatVersionBurndown.forecast(dateTime));
 			}
-			
+
 			return Response.ok(versionBurndown).build();
 		} catch (RuntimeException e) {
 			StringWriter sw = new StringWriter();
 			PrintWriter pw = new PrintWriter(sw);
 			e.printStackTrace(pw);
-			
+
 			return Response.ok(sw.getBuffer()).build();
 		}
 	}
-	
+
 	/**
 	 * Returns the list of projects browsable by the user in the specified
 	 * request.
@@ -195,7 +194,8 @@ public class BurndownResource {
 	@AnonymousAllowed
 	@Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
 	public Response getBurndownAggregated(@Context HttpServletRequest request,
-			@QueryParam("projectId") String projectIdString, @QueryParam("versionId") String versionIdString) {
+			@QueryParam("projectId") String projectIdString,
+			@QueryParam("versionId") String versionIdString) {
 		try {
 			Long projectId = Long.valueOf(projectIdString.substring("project-"
 					.length()));
@@ -206,13 +206,13 @@ public class BurndownResource {
 					projectId);
 			Project project = projectByKey.getProject();
 
-			
 			Version firstUnreleased;
 			if (versionIdString == null) {
-			firstUnreleased = versionRepository
-					.firstUnreleasedOfProject(project);
+				firstUnreleased = versionRepository
+						.firstUnreleasedOfProject(project);
 			} else {
-				firstUnreleased = versionRepository.byName(project, versionIdString);
+				firstUnreleased = versionRepository.byName(project,
+						versionIdString);
 			}
 
 			VersionBurndown versionBurndown = new VersionBurndown();
@@ -244,13 +244,13 @@ public class BurndownResource {
 
 			List<String> headers = new ArrayList<String>();
 			headers.add("Date");
-			headers.add("Version planned");
-			headers.add("Version actual");
+			headers.add("ideal");
+			headers.add("actual");
 
 			Map<User, Burndown> mapUserBurndown = new HashMap<User, Burndown>();
 			for (User aUser : assignees) {
 				if (aUser != null) {
-					headers.add(aUser.getName() + " actual");
+					headers.add(aUser.getName());
 				} else {
 					headers.add("Unassigned");
 				}
@@ -280,11 +280,7 @@ public class BurndownResource {
 							&& mapUserBurndown.get(aUser).ideal(dateTime)
 									.intValue() != 0) {
 						list.add(new BigDecimal(mapUserBurndown.get(aUser)
-								.actual(dateTime))
-								.multiply(thatVersionBurndown.ideal(dateTime))
-								.divide(mapUserBurndown.get(aUser).ideal(
-										dateTime), 2, RoundingMode.HALF_EVEN)
-								.setScale(2, RoundingMode.HALF_EVEN));
+								.actual(dateTime)));
 					} else {
 						if (dates.get(0).equals(dateTime))
 							list.add(BigDecimal.ZERO);
