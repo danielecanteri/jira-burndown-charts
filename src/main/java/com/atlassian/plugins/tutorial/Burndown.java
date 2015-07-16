@@ -98,8 +98,6 @@ public class Burndown {
 			for (DateTime aDate : dates) {
 				if (aDate.isAfter(DateTime.now())
 						&& (aDate.isBefore(dateTime) || aDate.isEqual(dateTime))) {
-					System.out.println("minus");
-					System.out.println(aDate);
 					result -= currentVelocity;
 				}
 			}
