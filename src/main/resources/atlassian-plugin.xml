@@ -15,6 +15,7 @@
         appear in the gadget directory and also allows administrators to
         disable/enable the gadget.
      -->
+    <gadget key="version-burndown-chart" name="Version burndown" location="version-burndown-gadget.xml"/>
     <gadget key="version-burndown-aggregated-chart" name="Version burndown aggregate" location="version-burndown-aggregated-gadget.xml"/>
     <gadget key="userload-chart" name="User load" location="user-load-gadget.xml"/>
  

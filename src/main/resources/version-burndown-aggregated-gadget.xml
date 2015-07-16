@@ -109,7 +109,7 @@
                 key: "burndown",
                 ajaxOptions: function() {
                     return {
-                        url: "/rest/jira-burndown-charts/1.0/burndown.json",
+                        url: "/rest/jira-burndown-charts/1.0/burndown/aggregated.json",
                         data:  {
                                             projectId : gadgets.util.unescapeString(this.getPref("projectId"))
                                           }

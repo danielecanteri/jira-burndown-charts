@@ -3,6 +3,10 @@
 	<msg name="version-burndown-aggregated.description">Version burndown aggregated.</msg>
 	<msg name="version-burndown-aggregated.config.title">Version burndown aggregated configuration</msg>
 
+	<msg name="version-burndown.title">Version burndown</msg>
+	<msg name="version-burndown.description">Version burndown.</msg>
+	<msg name="version-burndown.config.title">Version burndown configuration</msg>
+
 	<msg name="user-load.title">User load</msg>
 	<msg name="user-load.description">User load.</msg>
 	<msg name="user-load.config.title">User load configuration</msg>

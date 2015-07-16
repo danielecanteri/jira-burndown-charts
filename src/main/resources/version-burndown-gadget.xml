@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Module>
+	<ModulePrefs title="__MSG_version-burndown.title__" directory_title="__MSG_version-burndown.title__"
+		description="__MSG_version-burndown.description__">
+		<Optional feature="gadget-directory">
+			<Param name="categories">
+				Charts
+			</Param>
+		</Optional>
+		<Optional feature="atlassian.util" />
+		<Optional feature="auth-refresh" />
+		<Require feature="dynamic-height"/>
+		<Require feature="views" />
+		<Require feature="settitle" />
+        <Require feature="setprefs"/>
+		<Require feature="oauthpopup" />
+		#oauth
+		#supportedLocales("gadget.common")
+		<Locale
+			messages="__ATLASSIAN_BASE_URL__/download/resources/com.acme.jira-burndown-charts/i18n/ALL_ALL.xml" />
+	</ModulePrefs>
+    <UserPref name="isConfigured" datatype="hidden" default_value="false"/>
+	<UserPref name="projectOrFilterId" datatype="hidden" />
+	<UserPref name="projectId" datatype="hidden"/>
+	<UserPref name="versionName" datatype="hidden"/>
+	<Content type="html" view="profile">
+		<![CDATA[
+    #requireResource("com.atlassian.jira.gadgets:common")
+    #requireResource("com.acme.jira-burndown-charts:jira-burndown-charts-resources")
+    #includeResources()
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.2/angular.min.js"></script>
+    <script type="text/javascript">
+      google.load('visualization', '1', {packages: ['corechart']});
+    </script>
+    <script type="text/javascript">
+    
+    console.log("setting callback");
+          google.setOnLoadCallback(drawVisualization);
+    console.log("callback set");
+    function drawVisualization() {
+    
+       (function () {
+    var gadget = AJS.Gadget({
+        baseUrl: "__ATLASSIAN_BASE_URL__",
+        useOauth: "/rest/gadget/1.0/currentUser",
+		config: {
+                 descriptor: function(args)
+                 {
+                     var gadget = this;
+                     gadgets.window.setTitle("__MSG_version-burndown.config.title__");
+                     var projectPicker = AJS.gadget.fields.projectPicker(gadget, "projectId", args.projectOptions);
+                     console.log("configure")
+                     console.log(AJS.gadget.fields)
+                     console.log("configure")
+                     //var projectPicker = AJS.gadget.fields.projectPicker(gadget, "versionId", args.projectOptions);
+ 
+                     return {
+ 
+                         theme : function()
+                         {
+//                             if (gadgets.window.getViewportDimensions().width < 450)
+//                             {
+                                 return "gdt top-label";
+//                             }
+//                             else
+//                             {
+//                                 return "gdt";
+//                             }
+                         }(),
+                         fields: [
+                             projectPicker,
+                             AJS.gadget.fields.nowConfigured()
+                         ]
+                     };
+                 },
+                 args: function()
+                 {
+                     return [
+                         {
+                             key: "projectOptions",
+                             ajaxOptions:  "/rest/gadget/1.0/filtersAndProjects?showFilters=false"
+ 
+                         }
+ 
+ 
+                     ];
+                 }()
+             },
+                     view: {
+            template: function(args) {
+                var gadget = this;
+                
+                
+        // Some raw data (not necessarily accurate)
+//        var data = google.visualization.arrayToDataTable(args.burndown.dataTable);
+//        var options = {
+//          title : 'Project '+args.burndown.project.name+', burndown of version ' + args.burndown.version.name,
+//          vAxis: {title: "Hours"},
+//          hAxis: {title: "Month"},
+//          seriesType: "bars",
+//          series: {0: {type: "area"}, 1: {type: "area"}}
+//        };
+
+        var view = "<div id=\"myapp\"><div ng-app=\"myApp\">";
+        view += "<div ng-controller=\"MyController\">";
+        view += "Versioni";
+        view += '<ul><li ng-repeat="version in versions"><a ng-click="selectVersion(version.name)">{{version.name}}</a></li></ul>';
+        view += "</div>";
+        view += "<div id=\"chart_div\" style=\"width: 600px; height: 250px;\"></div></div></div>";
+		gadget.getView().html(view);
+
+               var myModule = angular.module('myApp', [])
+      				.controller('MyController', ['$scope', '$http', function ($scope, $http) {
+        			$scope.greetMe = 'World';
+        			$scope.projectId = gadget.getPref("projectId");
+        			$http.get(gadget.getBaseUrl()+'/rest/jira-burndown-charts/1.0/versions/all.json?projectId='+gadget.getPref("projectId")+'&_='+new Date().getTime())
+        				.success(function(data) {
+        					$scope.versions = data;
+        			});
+        			
+        			$scope.selectVersion = function(versionName) {
+	        			$http.get(gadget.getBaseUrl()+'/rest/jira-burndown-charts/1.0/burndown.json?projectId='+gadget.getPref("projectId")+'&versionId='+versionName+'&_='+new Date().getTime())
+	        				.success(function(data) {
+		      					gadget.savePref("versionName", versionName)
+						        var dataTable = google.visualization.arrayToDataTable(data.dataTable);
+						        var options = {
+						          title : 'Project '+data.project.name+', burndown of version ' + data.version.name,
+						          //,
+						//          vAxis: {title: "Hours"},
+						//          hAxis: {title: "Month"},
+						//          seriesType: "bars",
+						          series: { 2: { lineDashStyle: [2, 2, 10, 2, 10, 2] }}
+						        };
+						        chart.draw(dataTable, options);
+	        				
+	        				});
+
+        			}
+        			console.log('gadget name')
+        			console.log(gadget.getPref("versionName"))
+        			if (gadget.getPref("versionName") != null && gadget.getPref("versionName") != '') {
+        				$scope.selectVersion(gadget.getPref("versionName"));
+        			} else {
+	        			$http.get(gadget.getBaseUrl()+'/rest/jira-burndown-charts/1.0/versions/firstUnreleased.json?projectId='+gadget.getPref("projectId")+'&_='+new Date().getTime())
+	        				.success(function(data) {
+	        					gadget.savePref("versionName", data.name)
+		        				$scope.selectVersion(data.name);    				
+	        				})
+	        				
+        			}
+        			
+      			}]);
+      
+                angular.element("#myapp").ready(function() {
+                	console.log('ready')
+      				angular.bootstrap(angular.element("#myapp"), ['myApp']);
+      				console.log('done')
+   			});
+	    
+	        var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+    	    //chart.draw(data, options);
+                
+            },
+            args: [
+//            {
+//                key: "burndown",
+//                ajaxOptions: function() {
+//                    return {
+//                        url: "/rest/jira-burndown-charts/1.0/burndown.json",
+//                        data:  {
+//                                            projectId : gadgets.util.unescapeString(this.getPref("projectId"))
+//                                          }
+//                    };
+//                }
+//            }
+            ]
+        }
+    });
+})();
+
+      }
+
+    </script>
+    ]]>
+	</Content>
+</Module>
